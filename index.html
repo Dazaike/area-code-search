@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>
+  (function () {
+    var mode = "auto";
+    try { mode = localStorage.getItem("acs-theme") || "auto"; } catch (e) {}
+    if (mode !== "light" && mode !== "dark") mode = "auto";
+    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = mode === "auto" ? (dark ? "dark" : "light") : mode;
+  })();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Area Code Search</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="page">
+  <div class="layout">
+    <div class="col-main">
+      <header class="top">
+        <div class="title">
+          <h1>Area Code Search</h1>
+          <p class="tagline">North American (+1) area codes — search by number, city, state or country.</p>
+        </div>
+        <div class="seg" id="theme" role="radiogroup" aria-label="Theme">
+          <span class="seg-indicator glass" aria-hidden="true"></span>
+          <button type="button" role="radio" aria-checked="true" tabindex="0" data-mode="auto">Auto</button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" data-mode="light">Light</button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" data-mode="dark">Dark</button>
+        </div>
+      </header>
+
+      <div class="search-wrap">
+        <div class="search glass" id="search">
+          <svg class="icon icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18,11A7,7 0,1 1,4,11A7,7 0,1 1,18,11Z M15.95,15.95L20,20"/></svg>
+          <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false" aria-label="Search area codes" placeholder="Code, city, state, country or phone number">
+          <button type="button" class="ghost clear" id="clear" aria-label="Clear search">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6,6L18,18M18,6L6,18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="chips" id="chips" role="group" aria-label="Filter by region">
+        <button type="button" class="btn glass chip" data-group="ALL" aria-pressed="true">All</button>
+        <button type="button" class="btn glass chip" data-group="US" aria-pressed="false">United States</button>
+        <button type="button" class="btn glass chip" data-group="CA" aria-pressed="false">Canada</button>
+        <button type="button" class="btn glass chip" data-group="CAR" aria-pressed="false">Caribbean &amp; Atlantic</button>
+        <button type="button" class="btn glass chip" data-group="PAC" aria-pressed="false">Pacific</button>
+        <button type="button" class="btn glass chip" data-group="OTHER" aria-pressed="false">Non-geographic</button>
+      </div>
+
+      <p id="count" aria-live="polite"></p>
+      <div id="results"></div>
+
+      <footer>Area codes show where a number was originally assigned, not necessarily where it is now. Data: Wikipedia "List of North American Numbering Plan area codes" (CC BY-SA 4.0); city and place names (~2013 snapshot; newer overlays inherit their base code's cities) and time zones from Google libphonenumber (Apache-2.0). Map outlines: UCLA Geoportal "North America Telephone Area Code Boundaries" (2015, public domain) via 1ec5/nanp-boundaries, plus Natural Earth (public domain) for 867; codes created since then reuse the outline of the codes they overlay. Base map: © OpenStreetMap contributors (needs a network connection; the outlines work without it).</footer>
+    </div>
+
+    <section class="map-card glass" aria-label="Area code map">
+      <div class="map-view" id="map" tabindex="0" role="group" aria-label="Map of area code zones. Drag to pan, scroll or pinch to zoom, arrow keys to pan, plus and minus to zoom. The list holds the same results."></div>
+      <div class="map-tip glass" id="map-tip" hidden></div>
+      <p class="map-note" id="map-note" hidden></p>
+      <div class="map-ctl">
+        <button type="button" class="btn glass map-btn" id="map-zoom-in" aria-label="Zoom in">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12,5V19M5,12H19"/></svg>
+        </button>
+        <button type="button" class="btn glass map-btn" id="map-zoom-out" aria-label="Zoom out">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5,12H19"/></svg>
+        </button>
+        <button type="button" class="btn glass map-btn" id="map-reset" aria-label="Fit all results">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4,9V4H9M15,4H20V9M20,15V20H15M9,20H4V15"/></svg>
+        </button>
+      </div>
+      <p class="map-attrib"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a></p>
+    </section>
+  </div>
+</div>
+
+<div id="scrim" hidden></div>
+<section id="sheet" class="glass" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="sheet-head">
+    <div class="sheet-code" id="sheet-code"></div>
+    <button type="button" class="ghost close" id="sheet-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6,6L18,18M18,6L6,18"/></svg>
+    </button>
+  </div>
+  <h2 id="sheet-title"></h2>
+  <p class="sheet-country" id="sheet-country"></p>
+  <dl class="facts" id="sheet-facts"></dl>
+  <button type="button" class="btn btn-md btn-primary glass" id="copy"></button>
+</section>
+
+<script src="assets/data.js"></script>
+<script src="assets/map-data.js"></script>
+<script src="assets/search.js"></script>
+<script src="assets/map.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
